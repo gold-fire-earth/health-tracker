@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useFoodLogStore } from '../stores/foodLogStore';
 import { FoodSelector } from '../components/FoodSelector';
+import type { OnlineResult } from '../components/FoodSelector';
 import type { Recipe } from '../db/database';
 import { db } from '../db/database';
 
@@ -76,6 +77,21 @@ export default function FoodLog() {
       protein: recipe.protein,
       carbs: recipe.carbs,
       fat: recipe.fat,
+    });
+    setSelectorOpen(false);
+  };
+
+  const handleSelectOnline = (result: OnlineResult) => {
+    addLog({
+      date,
+      mealType: activeMealType,
+      recipeId: -1,
+      recipeName: result.name,
+      servings: 1,
+      calories: result.calories,
+      protein: result.protein,
+      carbs: result.carbs,
+      fat: result.fat,
     });
     setSelectorOpen(false);
   };
@@ -263,6 +279,7 @@ export default function FoodLog() {
           mealType={activeMealType}
           recentRecipeIds={recentRecipeIds}
           onSelect={handleSelect}
+          onSelectOnline={handleSelectOnline}
           onClose={() => setSelectorOpen(false)}
         />
       )}
