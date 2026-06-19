@@ -65,7 +65,7 @@ export function FoodSelector({ mealType, recentRecipeIds, onSelect, onSelectOnli
     return list.slice(0, 40);
   }, [recipes, filter, search, recentRecipeIds]);
 
-  // Debounced online search
+  // Debounced online search — direct OpenFoodFacts API call
   useEffect(() => {
     const q = search.trim();
     if (q.length < 2) {
@@ -76,9 +76,30 @@ export function FoodSelector({ mealType, recentRecipeIds, onSelect, onSelectOnli
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-        const data = await res.json();
-        setOnlineResults(data.results || []);
+        const offUrl = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&json=1&page_size=20&search_simple=1`;
+        const res = await fetch(offUrl);
+        const data = await res.json() as {
+          products?: Array<{
+            product_name?: string;
+            brands?: string;
+            nutriments?: Record<string, number>;
+            serving_size?: string;
+          }>;
+        };
+        const products = data.products || [];
+        const results: OnlineResult[] = products
+          .filter((p) => p.product_name && p.nutriments?.['energy-kcal_100g'])
+          .slice(0, 20)
+          .map((p) => ({
+            name: p.product_name!,
+            brand: p.brands || '',
+            calories: Math.round(p.nutriments?.['energy-kcal_100g'] || 0),
+            protein: +(p.nutriments?.proteins_100g || 0).toFixed(1),
+            carbs: +(p.nutriments?.carbohydrates_100g || 0).toFixed(1),
+            fat: +(p.nutriments?.fat_100g || 0).toFixed(1),
+            servingSize: p.serving_size || '100g',
+          }));
+        setOnlineResults(results);
       } catch {
         setOnlineResults([]);
       }
