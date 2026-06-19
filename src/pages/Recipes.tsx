@@ -1,18 +1,34 @@
 import { useState, useMemo } from 'react';
 import { useRecipeStore } from '../stores/recipeStore';
-import type { Recipe } from '../db/database';
+import { CATEGORY_LABELS, type Category, type Recipe } from '../db/database';
 
-const FILTERS = [
-  { key: 'all', label: '全部' },
+const MEAL_OPTIONS = [
+  { key: 'all', label: '全部餐段' },
   { key: 'breakfast', label: '🌅 早餐' },
   { key: 'lunch', label: '☀️ 午餐' },
   { key: 'dinner', label: '🌙 晚餐' },
   { key: 'snack', label: '🍎 加餐' },
 ] as const;
 
+const CATEGORY_OPTIONS: Array<{ key: Category | 'all'; label: string }> = [
+  { key: 'all', label: '全部类别' },
+  { key: 'breakfast', label: CATEGORY_LABELS.breakfast },
+  { key: 'staple', label: CATEGORY_LABELS.staple },
+  { key: 'meat', label: CATEGORY_LABELS.meat },
+  { key: 'home-cooking', label: CATEGORY_LABELS['home-cooking'] },
+  { key: 'vegetable', label: CATEGORY_LABELS.vegetable },
+  { key: 'hotpot', label: CATEGORY_LABELS.hotpot },
+  { key: 'fast-food', label: CATEGORY_LABELS['fast-food'] },
+  { key: 'packaged', label: CATEGORY_LABELS.packaged },
+  { key: 'fruit', label: CATEGORY_LABELS.fruit },
+  { key: 'snack-dessert', label: CATEGORY_LABELS['snack-dessert'] },
+  { key: 'beverage', label: CATEGORY_LABELS.beverage },
+];
+
 const EMPTY_FORM: Omit<Recipe, 'id'> = {
   name: '',
   mealType: 'lunch',
+  category: 'home-cooking',
   calories: 0,
   protein: 0,
   carbs: 0,
@@ -29,34 +45,33 @@ export default function Recipes() {
   const remove = useRecipeStore((s) => s.remove);
 
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<string>('all');
+  const [mealFilter, setMealFilter] = useState<string>('all');
+  const [catFilter, setCatFilter] = useState<Category | 'all'>('all');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
   const filtered = useMemo(() => {
     let list = recipes;
-    if (filter !== 'all') {
-      if (filter === 'lunch') {
-        list = list.filter((r) => r.mealType === 'lunch' || r.mealType === 'dinner');
-      } else if (filter === 'dinner') {
-        list = list.filter((r) => r.mealType === 'dinner' || r.mealType === 'lunch');
-      } else {
-        list = list.filter((r) => r.mealType === filter);
-      }
+    if (mealFilter !== 'all') {
+      list = list.filter((r) => r.mealType === mealFilter);
+    }
+    if (catFilter !== 'all') {
+      list = list.filter((r) => r.category === catFilter);
     }
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter((r) => r.name.toLowerCase().includes(q));
     }
     return list;
-  }, [recipes, filter, search]);
+  }, [recipes, mealFilter, catFilter, search]);
 
   const openEdit = (r: Recipe) => {
     setEditingId(r.id!);
     setForm({
       name: r.name,
       mealType: r.mealType,
+      category: r.category,
       calories: r.calories,
       protein: r.protein,
       carbs: r.carbs,
@@ -103,21 +118,38 @@ export default function Recipes() {
         className="input-field"
       />
 
-      {/* Filters */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar">
-        {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            onClick={() => setFilter(f.key)}
-            className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
-              filter === f.key
-                ? 'bg-primary-400 text-white font-medium'
-                : 'bg-gray-100 text-gray-500'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
+      {/* Filters: two dropdowns side by side */}
+      <div className="grid grid-cols-2 gap-2">
+        <select
+          value={mealFilter}
+          onChange={(e) => setMealFilter(e.target.value)}
+          className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 appearance-none"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 12px center',
+            paddingRight: '32px',
+          }}
+        >
+          {MEAL_OPTIONS.map((opt) => (
+            <option key={opt.key} value={opt.key}>{opt.label}</option>
+          ))}
+        </select>
+        <select
+          value={catFilter}
+          onChange={(e) => setCatFilter(e.target.value as Category | 'all')}
+          className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 appearance-none"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 12px center',
+            paddingRight: '32px',
+          }}
+        >
+          {CATEGORY_OPTIONS.map((opt) => (
+            <option key={opt.key} value={opt.key}>{opt.label}</option>
+          ))}
+        </select>
       </div>
 
       {/* Count */}
@@ -142,7 +174,7 @@ export default function Recipes() {
                   )}
                 </div>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  {r.servingSize}{r.servingUnit}/份 · P{r.protein}g C{r.carbs}g F{r.fat}g
+                  {r.servingSize}{r.servingUnit}/份 · {CATEGORY_LABELS[r.category] || r.category} · P{r.protein}g C{r.carbs}g F{r.fat}g
                 </p>
               </div>
               <div className="text-right">
@@ -198,6 +230,20 @@ export default function Recipes() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Category */}
+            <div>
+              <label className="text-sm text-gray-500 block mb-1">类别</label>
+              <select
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value as Category })}
+                className="input-field"
+              >
+                {CATEGORY_OPTIONS.filter((o) => o.key !== 'all').map((opt) => (
+                  <option key={opt.key} value={opt.key}>{opt.label}</option>
+                ))}
+              </select>
             </div>
 
             {/* Calories */}

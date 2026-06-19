@@ -81,6 +81,23 @@ export default function FoodLog() {
     setSelectorOpen(false);
   };
 
+  const handleSelectBatch = (recipes: Recipe[]) => {
+    recipes.forEach((recipe) => {
+      addLog({
+        date,
+        mealType: activeMealType,
+        recipeId: recipe.id!,
+        recipeName: recipe.name,
+        servings: 1,
+        calories: recipe.calories,
+        protein: recipe.protein,
+        carbs: recipe.carbs,
+        fat: recipe.fat,
+      });
+    });
+    // Closes inside FoodSelector after batch confirm
+  };
+
   const handleSelectOnline = (result: OnlineResult) => {
     addLog({
       date,
@@ -93,7 +110,7 @@ export default function FoodLog() {
       carbs: result.carbs,
       fat: result.fat,
     });
-    setSelectorOpen(false);
+    // Don't close — user may want to add more online results
   };
 
   const handleQuickAdd = () => {
@@ -280,6 +297,7 @@ export default function FoodLog() {
           recentRecipeIds={recentRecipeIds}
           onSelect={handleSelect}
           onSelectOnline={handleSelectOnline}
+          onSelectBatch={handleSelectBatch}
           onClose={() => setSelectorOpen(false)}
         />
       )}

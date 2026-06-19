@@ -19,15 +19,20 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   load: async () => {
     const count = await db.recipes.count();
     if (count === 0) {
-      // First run: seed all presets
       await db.recipes.bulkAdd(presetRecipes as Recipe[]);
     } else {
-      // Incremental: add any new presets not yet in DB
       const existing = await db.recipes.toArray();
       const existingNames = new Set(existing.map((r) => r.name));
       const newPresets = presetRecipes.filter((p) => !existingNames.has(p.name));
       if (newPresets.length > 0) {
         await db.recipes.bulkAdd(newPresets as Recipe[]);
+      }
+      // Migrate: backfill category for existing recipes that lack it
+      const presetMap = new Map(presetRecipes.map((p) => [p.name, p]));
+      for (const r of existing) {
+        if (!(r as any).category && presetMap.has(r.name)) {
+          await db.recipes.update(r.id!, { category: presetMap.get(r.name)!.category } as any);
+        }
       }
     }
     const all = await db.recipes.orderBy('name').toArray();

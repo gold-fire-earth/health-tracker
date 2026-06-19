@@ -1,9 +1,37 @@
 import Dexie, { Table } from 'dexie';
 
+export type Category =
+  | 'breakfast'
+  | 'staple'
+  | 'meat'
+  | 'home-cooking'
+  | 'vegetable'
+  | 'hotpot'
+  | 'fast-food'
+  | 'packaged'
+  | 'fruit'
+  | 'snack-dessert'
+  | 'beverage';
+
+export const CATEGORY_LABELS: Record<Category, string> = {
+  breakfast: '🥟 早餐',
+  staple: '🍚 主食',
+  meat: '🥩 肉类蛋白',
+  'home-cooking': '🍳 家常菜',
+  vegetable: '🥬 蔬菜',
+  hotpot: '🍲 火锅',
+  'fast-food': '🍔 快餐',
+  packaged: '📦 包装速食',
+  fruit: '🍑 水果',
+  'snack-dessert': '🍰 零食甜品',
+  beverage: '🥤 饮品',
+};
+
 export interface Recipe {
   id?: number;
   name: string;
   mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  category: Category;
   calories: number;
   protein: number;
   carbs: number;
@@ -67,6 +95,13 @@ class HealthDB extends Dexie {
     super('HealthTrackerDB');
     this.version(1).stores({
       recipes: '++id, mealType, name, isPreset',
+      foodLogs: '++id, date, mealType, [date+mealType]',
+      activityLogs: '++id, date',
+      userProfile: '++id',
+      dailyTargets: '++id, date',
+    });
+    this.version(2).stores({
+      recipes: '++id, mealType, category, name, isPreset',
       foodLogs: '++id, date, mealType, [date+mealType]',
       activityLogs: '++id, date',
       userProfile: '++id',
