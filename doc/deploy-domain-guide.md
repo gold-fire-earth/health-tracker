@@ -273,6 +273,22 @@ GitHub 服务器一看 Host 头：
 
 类比：一个写字楼（IP）里住了几百家公司（域名），快递员（请求）到了楼下，靠公司名（Host 头）找到具体那家公司。
 
+**用你自己的网站做例子**，这两个 URL 指向同一个 IP，但看到的内容一模一样——因为 Host 头不同，GitHub 去不同的目录取文件：
+
+```
+同时访问 185.199.108.153（同一个服务器）:
+
+  请求A:  Host: keephealthy-wxl.top
+          → GitHub 找到 gold-fire-earth/health-tracker 仓库
+          → 返回你的 index.html  ← 健康追踪 App
+
+  请求B:  Host: myblog.github.io
+          → GitHub 找到 someone-else/myblog 仓库
+          → 返回别人的 index.html  ← 完全不同的网站
+```
+
+**同一个 IP + 不同 Host 头 = 不同的 index.html = 不同的网站。** 就像同一栋楼，不同公司门牌号，进去看到的是完全不同的办公室。
+
 这也解释了为什么你花几十块买域名就够了——你不需要独占一个 IP，你跟别人合租写字楼。
 
 ---
